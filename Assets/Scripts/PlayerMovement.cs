@@ -86,7 +86,7 @@ public class PlayerMovement : MonoBehaviour
         if (rb.velocity.y < 1 && !grounded)
         {
 
-            if(rb.gravityScale <= 2.5f)
+            if(rb.gravityScale <= 4f)
             {
                 rb.gravityScale += 20 * Time.deltaTime;
             }

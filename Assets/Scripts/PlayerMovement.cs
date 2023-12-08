@@ -11,7 +11,9 @@ public class PlayerMovement : MonoBehaviour
     private float lastTimeGrounded;
     private float lastTimeJumpPressed;
     private bool grounded = true;
+    private bool haveJump;
     private bool wallJump;
+    private float wallJumpMultiplier;
 
     private Rigidbody2D rb;
 
@@ -38,6 +40,7 @@ public class PlayerMovement : MonoBehaviour
             if(horizontalMovement >= -_speed)
             {
                 horizontalMovement -= 40 * Time.deltaTime;
+                wallJumpMultiplier = -1;
             }
             else
             {
@@ -49,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
             if(horizontalMovement <= _speed)
             {
                 horizontalMovement += 40 * Time.deltaTime;
+                wallJumpMultiplier = 1;
             }
             else
             {
@@ -59,11 +63,16 @@ public class PlayerMovement : MonoBehaviour
         {
             if(horizontalMovement != 0)
             {
+                if (horizontalMovement <= 0.05 && horizontalMovement >= -0.05)
+                {
+                    horizontalMovement = 0;
+                }
+
                 if (horizontalMovement < 0)
                 {
                     horizontalMovement += 25 * Time.deltaTime;
                 }
-                else
+                else if(horizontalMovement > 0)
                 {
                     horizontalMovement -= 25 * Time.deltaTime;
                 }
@@ -73,8 +82,18 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetButtonDown("Jump") && lastTimeJumpPressed - lastTimeGrounded < 0.2f)
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-            walkParticle.Play();
+            if(!haveJump && !wallJump)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+                walkParticle.Play();
+                haveJump = true;
+            }
+
+            else if(wallJump)
+            {
+                horizontalMovement = 0;
+                rb.velocity = new Vector2(15 * -wallJumpMultiplier, jumpForce*1.5f);
+            }
         }
 
         if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
@@ -96,7 +115,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        rb.velocity = new Vector3(horizontalMovement, rb.velocity.y, 0);
+        if (!wallJump)
+        {
+            rb.velocity = new Vector3(horizontalMovement, rb.velocity.y, 0);
+        }
     }
 
 
@@ -108,6 +130,12 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        haveJump = false;
+        wallJump = true;
+    }
+
     private void OnCollisionStay2D(Collision2D collision)
     {
         if (collision.gameObject.layer == 3)
@@ -115,6 +143,13 @@ public class PlayerMovement : MonoBehaviour
             grounded = true;
         }
     }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        haveJump = false;
+        grounded = true;
+    }
+
     private void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.gameObject.layer == 3)

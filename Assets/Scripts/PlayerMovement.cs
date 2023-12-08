@@ -4,51 +4,84 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private float horizontal;
-    private float speed = 8f;
+    [SerializeField] private float _speed = 8f;
+    private float horizontalMovement;
     private float jumpForce = 8;
-    private bool Grounded = true;
+    private float lastTimeGrounded;
+    private float lastTimeJumpPressed;
+    private bool grounded = true;
+    private bool ctrlDown;
 
-    [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private Transform groundCheck;
+    private Rigidbody2D rb;
 
     private void Start()
     {
+        
         rb = GetComponent<Rigidbody2D>();
     }
 
     void Update()
     {
-        horizontal = Input.GetAxisRaw("Horizontal");
 
-        if (Input.GetButtonDown("Jump") && Grounded)
+        if(grounded)
+        {
+            lastTimeGrounded = Time.time;
+        }
+        if(Input.GetButtonDown("Jump"))
+        {
+            lastTimeJumpPressed = Time.time;
+        }
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            horizontalMovement = -_speed;
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            horizontalMovement = _speed;
+        }
+        else
+        {
+            if(horizontalMovement != 0)
+            {
+                horizontalMovement *= 0.3f;
+            }
+        }
+
+
+        if (Input.GetButtonDown("Jump") && lastTimeJumpPressed - lastTimeGrounded < 0.2f)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
 
         if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
         {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.1f);
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.3f);
         }
 
-        if (rb.velocity.y < 0)
+
+        if (rb.velocity.y < 0 && !grounded)
         {
-            rb.gravityScale = 2f;
+
+            if(rb.gravityScale <= 2.5f)
+            {
+                rb.gravityScale += Time.deltaTime*7;
+            }
         }
         else rb.gravityScale = 1f;
-      
     }
 
     private void FixedUpdate()
     {
-        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
+        rb.velocity = new Vector3(horizontalMovement, rb.velocity.y, 0);
     }
+
 
     private void OnTriggerStay2D(Collider2D collision)
     {
         if (collision.gameObject.layer == 3)
         {
-            Grounded = true;
+            grounded = true;
         }
     }
 
@@ -56,7 +89,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.layer == 3)
         {
-            Grounded = false;
+            grounded = false;
         }
     }
 

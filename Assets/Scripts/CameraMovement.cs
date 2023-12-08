@@ -11,7 +11,7 @@ public class CameraMovement : MonoBehaviour
     [SerializeField] private Camera cam;
     [SerializeField] private GameObject target;
     private float x, y, z;
-    private float yOffset = 3;
+    [SerializeField] private float yOffset ;
 
 
     void Start()
